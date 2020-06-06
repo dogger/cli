@@ -33,11 +33,16 @@ jobs:
         working-directory: .
         run: |
           npm run build
+
+      - name: Test
+        working-directory: .
+        run: |
           npm run test
-          npm publish --dry-run
 
       - name: Publish package to NPM
         working-directory: .
-        run: npm publish --access=public || true
+        run: |
+          npm publish --dry-run
+          npm publish --access=public || true
         env:
             NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
