@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+const command = require('../dist/index.js');
+const yargs = require('yargs');
+
+const checkCommands = require('../dist/utils/general').checkCommands;
+checkCommands(yargs, command.demandCommand().argv, 1);

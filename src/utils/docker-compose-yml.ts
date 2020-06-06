@@ -1,0 +1,147 @@
+import yaml from 'yaml';
+import fs = require('fs');
+import path = require('path');
+
+export type EnvFile = string|string[]|undefined;
+
+export type Volume = {
+    source: string|undefined;
+}
+
+export type Volumes = undefined|Array<Volume|string>;
+
+export type Build = {
+    context: string|undefined;
+    dockerfile: string|undefined;
+}
+
+export type Service = {
+    env_file: EnvFile|undefined;
+    volumes: Volumes|undefined;
+    build: Build|undefined;
+    image: string|undefined;
+}
+
+export type ComposeContents = {
+    services: {
+        [name: string]: Service
+    }
+}
+
+export type ComposeFile = {
+    parsed: ComposeContents;
+    path: string;
+    contents: string;
+}
+
+export function getServicesWithBuildReferences(composeFiles: ComposeFile[]) {
+    const services = getServicesFromComposeFiles(composeFiles);
+    return services.filter(x => !!x.service.build);
+}
+
+export function parseComposeFiles(filePaths: string[]): ComposeFile[] {
+    return filePaths.map(parseComposeFile);
+}
+
+export function yamlifyComposeFiles(composeFiles: ComposeFile[]) {
+    return composeFiles
+        .map(x => x.parsed)
+        .map(x => yaml.stringify(x));
+}
+
+export function parseComposeFile(filePath: string): ComposeFile {
+    const fileContents = fs.readFileSync(filePath).toString();
+    return {
+        parsed: yaml.parse(fileContents),
+        contents: fileContents,
+        path: path.resolve(filePath)
+    }
+}
+
+export function getServicesFromComposeFiles(composeFiles: ComposeFile[]) {
+    return composeFiles
+        .map(x => x.parsed)
+        .map(x => x.services)
+        .filter(x => !!x)
+        .map(services => Object
+            .getOwnPropertyNames(services)
+            .map(serviceName => ({
+                service: services[serviceName],
+                name: serviceName
+            }))
+            .filter(x => !!x.service))
+        .filter(x => !!x)
+        .flat();
+}
+
+export function mapPropertyFromServices<T>(
+    composeFiles: ComposeFile[],
+    selector: (service: Service) => T|null|undefined): T[]
+{
+    const values = getServicesFromComposeFiles(composeFiles)
+        .map(x => x.service)
+        .map(selector)
+        .filter(x => !!x)
+        .flat();
+    return values as T[];
+}
+
+export function getAbsolutePathRelativeToComposeFiles(composeFiles: ComposeFile[], filePath: fs.PathLike) {
+    return path.join(
+        getWorkingDirectoryForDockerComposeFiles(composeFiles), 
+        filePath.toString());
+}
+
+export function getWorkingDirectoryForDockerComposeFiles(composeFiles: ComposeFile[]): string {
+    return path.dirname(composeFiles[0].path.toString());
+}
+
+export function getVolumeFilePaths(...composeFiles: ComposeFile[]): string[] {
+    return mapPropertyFromServices(composeFiles, ({volumes}) => {
+        if(typeof volumes === "undefined") {
+            return void 0;
+        } else if(Array.isArray(volumes)) {
+            return volumes
+                .map(volume => typeof volume === "string" ?
+                    volume.split(':')[0] :
+                    volume.source)
+                .filter(x => !!x)
+                .map(x => x!)
+                .map(x => {
+                    const absolutePath = getAbsolutePathRelativeToComposeFiles(composeFiles, x);
+                    const stat = fs.lstatSync(absolutePath);
+                    if(!stat.isDirectory() && stat.isFile()) {
+                        return [x];
+                    } else if(stat.isDirectory() && !stat.isFile()) {
+                        return fs
+                            .readdirSync(absolutePath, { 
+                                withFileTypes: true 
+                            })
+                            .filter(item => !item.isDirectory())
+                            .map(item => `${x}/${item.name}`);
+                    }
+
+                    return [];
+                })
+                .flat()
+                .filter(x => !!x)
+                .map(x => x!);
+        } else {
+            return null;
+        }
+    }) as any as string[];
+}
+
+export function getEnvironmentFilePaths(...composeFiles: ComposeFile[]): string[] {
+    return mapPropertyFromServices(composeFiles, ({env_file}) => {
+        if(typeof env_file === "undefined") {
+            return void 0;
+        } else if(typeof env_file === "string") {
+            return [env_file];
+        } else if(Array.isArray(env_file)) {
+            return env_file;
+        } else {
+            return null;
+        }
+    }) as any as string[];
+}
