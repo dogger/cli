@@ -15,7 +15,6 @@ jobs:
     name: Deploy dogger-cli
     runs-on: ubuntu-latest
     if: contains(github.ref, 'master')
-    needs: test
 
     steps:
       - name: Checkout repository
@@ -34,6 +33,7 @@ jobs:
         working-directory: .
         run: |
           npm run build
+          npm run test
           npm publish --dry-run
 
       - name: Publish package to NPM
