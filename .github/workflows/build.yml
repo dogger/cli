@@ -1,0 +1,43 @@
+name: NPM
+
+on:
+  push:
+    branches:
+      - master
+
+    tags:
+      - v*
+
+  pull_request:
+
+jobs:
+  deploy-dogger-cli:
+    name: Deploy dogger-cli
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'master')
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js for NPM
+        uses: actions/setup-node@v1
+        with:
+            registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        working-directory: .
+        run: npm install
+
+      - name: Compile
+        working-directory: .
+        run: |
+          npm run build
+          npm publish --dry-run
+
+      - name: Publish package to NPM
+        working-directory: .
+        run: npm publish --access=public || true
+        env:
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
