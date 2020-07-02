@@ -162,10 +162,15 @@ export = {
                 throw new Error();
 
             const registryHostName = loginResponse.url;
+            if(!registryHostName)
+                throw new Error("Expected a registry host name, but none was given from the server.");
+
             const {username, password} = loginResponse;
+            if(!username || !password)
+                throw new Error('No username or password was returned from the server when requesting ECR credentials.');
 
             const loginProcess = await showSpinnerUntil(`Signing in to Dogger registry`, async () => 
-                await execa("docker", ["login", ["--username", username], ["--password", password], registryHostName].flat(), {
+                await execa("docker", ["login", ...["--username", username], ...["--password", password], registryHostName], {
                     reject: false
                 }));
             if(loginProcess.exitCode !== 0) {

@@ -1,13 +1,20 @@
-import fs = require('fs');
-import path = require('path');
+import fs from 'fs';
+import path from 'path';
 import { URLSearchParams } from 'url';
 
 import { getDoggerPath, ensureDoggerPath } from './paths';
 import { postForm, postJson } from './http';
 import { ask, consoleLog, consoleError } from './console';
 
-let token: string|null = null;
-let isStateless: boolean = false;
+let token: string|null;
+let isStateless: boolean;
+
+resetGlobalState();
+
+export function resetGlobalState() {
+    token = null;
+    isStateless = false;
+}
 
 export function setIsStateless(value: boolean) {
     if(value)
@@ -16,7 +23,7 @@ export function setIsStateless(value: boolean) {
     isStateless = value;
 }
 
-function setToken(token: string) {
+export function setToken(token: string) {
     if(isStateless)
         return;
 

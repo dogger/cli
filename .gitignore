@@ -343,3 +343,6 @@ dist/**
 dist/
 *.js
 !/bin
+
+.nyc_output/
+coverage/

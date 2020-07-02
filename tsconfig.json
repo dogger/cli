@@ -7,7 +7,9 @@
         "sourceMap": true,
         "downlevelIteration": true,
         "resolveJsonModule": true,
-        "esModuleInterop": true,
+        "esModuleInterop": true,        
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "declaration": true,
         "strict": true,
         "lib": ["ES2020", "DOM"]

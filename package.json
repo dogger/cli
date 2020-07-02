@@ -11,7 +11,8 @@
     "build": "npm run clean && tsc && cp package.json ./dist/metadata.json --no-target-directory && npm publish --dry-run",
     "link": "npm link",
     "unlink": "npm unlink",
-    "test": "npm run clean && tsc && ava",
+    "test": "jest --coverage",
+    "test:watch": "jest --coverage --watch",
     "swagger": "rimraf ./src/api/openapi && docker run --rm -e JAVA_OPTS=\"-Dio.swagger.parser.util.RemoteUrl.trustAll=true -Dio.swagger.v3.parser.util.RemoteUrl.trustAll=true\" -v %cd%:/local openapitools/openapi-generator-cli:v4.2.3 generate -i https://host.docker.internal:14567/swagger/v1/swagger.json -g typescript-fetch -o src/api/openapi --additional-properties=\"useSingleRequestParameter=false\" -o /local/src/api/openapi"
   },
   "author": "",
@@ -24,15 +25,18 @@
     "dist"
   ],
   "devDependencies": {
-    "@types/string-hash": "^1.1.1",
     "@types/capture-console": "^1.0.0",
+    "@types/jest": "^26.0.3",
     "@types/node": "^14.0.1",
     "@types/node-fetch": "^2.5.6",
     "@types/semver": "^7.1.0",
+    "@types/string-hash": "^1.1.1",
     "@types/yargs": "^15.0.4",
-    "ava": "^3.8.2",
     "esm": "^3.2.25",
+    "jest": "^26.1.0",
+    "jest-when": "^2.7.2",
     "rimraf": "^3.0.1",
+    "ts-jest": "^26.1.1",
     "ts-node": "^8.10.1",
     "typescript": "^3.8.3"
   },
@@ -50,13 +54,5 @@
     "string-hash": "^1.1.3",
     "yaml": "1.9.2",
     "yargs": "^15.3.1"
-  },
-  "ava": {
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
   }
 }
