@@ -1,7 +1,7 @@
-import { refreshAccessToken } from "../utils/auth";
 import { GeneralApi, ConfigurationParameters, FetchAPI, Configuration } from "./openapi";
 import fetch, { RequestInfo, RequestInit } from "node-fetch";
 import { isDevMode } from "../utils/general";
+import { refreshAccessToken } from "../utils/auth/tokens";
 
 (global as any).FormData = class {};
 (global as any).fetch = fetch;

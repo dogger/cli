@@ -1,6 +1,7 @@
 import { globalState, getClientId } from './globals';
-jest.mock('fs');
-import fs from 'fs';
+
+jest.mock('./persistence');
+import * as persistence from './persistence';
 
 import { cleanMocked } from '../tests';
 
@@ -8,25 +9,24 @@ afterEach(() => globalState.reset());
 
 test('setIsStateless_isTrue_clearsPersistedToken', async () => {
 	//arrange
-	const fakeWriteFileSync = cleanMocked(fs.writeFileSync);
+	const fakePersistRefreshToken = cleanMocked(persistence.persistRefreshToken);
 	
 	//act
 	globalState.setIsStateless(true);
 
     //assert
-	expect(fakeWriteFileSync.mock.calls.length).toBe(1);
-	expect(fakeWriteFileSync.mock.calls[0][1]).toBe('');
+	expect(fakePersistRefreshToken.mock.calls.length).toBe(1);
 });
 
 test('setIsStateless_isFalse_doesNotClearPersistedToken', async () => {
 	//arrange
-	const fakeWriteFileSync = cleanMocked(fs.writeFileSync);
+	const fakePersistRefreshToken = cleanMocked(persistence.persistRefreshToken);
 	
 	//act
 	globalState.setIsStateless(false);
 
     //assert
-	expect(fakeWriteFileSync.mock.calls.length).toBe(0);
+	expect(fakePersistRefreshToken.mock.calls.length).toBe(0);
 });
 
 test('getIsStateless_isTrue_returnsTrue', async () => {

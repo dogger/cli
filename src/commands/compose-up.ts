@@ -1,4 +1,3 @@
-import { withCredentials } from '../utils/auth';
 import { CommandModule } from 'yargs';
 import { apiClient } from '../api/Client';
 import { existsSync, readFileSync, PathLike } from 'fs';
@@ -12,6 +11,7 @@ import { provision } from './plan.shared';
 import { DeployToClusterRequest } from '../api/openapi';
 import { handleValidationErrors } from '../utils/http';
 import { printLogs } from './logs.shared';
+import { withCredentials } from '../utils/auth/middleware';
 
 function tryMapFile(composeFiles: ComposeFile[], filePath: PathLike) {
     const relativeFilePathToComposeFile = getAbsoluteDirectoryRelativeToComposeFile(composeFiles, filePath);

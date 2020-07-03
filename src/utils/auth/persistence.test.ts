@@ -1,4 +1,5 @@
 jest.mock('../paths');
+
 jest.mock('fs');
 jest.mock('path');
 
