@@ -3,7 +3,7 @@ import 'array-flat-polyfill';
 import index = require('./index');
 import indexCompose = require('./index.compose');
 import captureConsole = require('capture-console');
-import { setIsStateless } from './utils/auth';
+import { globalState } from './utils/auth/globals';
 
 process.env.DOGGER_NO_UPDATE = "true";
 
@@ -22,7 +22,7 @@ export = function(command: string, options?: Options) {
         throw new Error('No command specified.');
 
     if(options?.stateless)
-        setIsStateless(options?.stateless);
+        globalState.setIsStateless(options?.stateless);
 
     const onBegin = () => {
         options?.pipe?.stdout && captureConsole.startIntercept(process.stdout, options?.pipe.stdout as any);
