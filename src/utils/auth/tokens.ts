@@ -27,36 +27,31 @@ export async function refreshAccessToken(refreshToken?: string) {
 }
 
 export async function acquireNewTokens(email?: string) {
-    try {
-        if(!email)
-            email = await ask('What e-mail do you use to sign in to Dogger?\nIf you haven\'t signed up yet, simply type your e-mail to sign up.');
+    if(!email)
+        email = await ask('What e-mail do you use to sign in to Dogger?\nIf you haven\'t signed up yet, simply type your e-mail to sign up.');
 
-        await postJson("https://dogger.eu.auth0.com/passwordless/start", {
-            "client_id": getClientId(),
-            "connection": "email",
-            "email": email,
-            "send": "code"
-        });
+    await postJson("https://dogger.eu.auth0.com/passwordless/start", {
+        "client_id": getClientId(),
+        "connection": "email",
+        "email": email,
+        "send": "code"
+    });
 
-        consoleLog("Check your e-mail. A one-time code has been sent to it.");
+    consoleLog("Check your e-mail. A one-time code has been sent to it.");
 
-        let code = await ask("What is the one-time code?");
+    let code = await ask("What is the one-time code?");
 
-        const response: { access_token: string, refresh_token: string } = await postJson("https://dogger.eu.auth0.com/oauth/token", {
-            "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
-            "client_id": getClientId(),
-            "username": email,
-            "otp": code,
-            "realm": "email",
-            "audience": "https://dogger.io/api",
-            "scope": "offline_access"
-        });
+    const response: { access_token: string, refresh_token: string } = await postJson("https://dogger.eu.auth0.com/oauth/token", {
+        "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
+        "client_id": getClientId(),
+        "username": email,
+        "otp": code,
+        "realm": "email",
+        "audience": "https://dogger.io/api",
+        "scope": "offline_access"
+    });
 
-        persistRefreshToken(response.refresh_token);
+    persistRefreshToken(response.refresh_token);
 
-        return response;
-    } catch (ex) {
-        ex && consoleError("Could not acquire a new access token for Dogger.");
-        throw ex;
-    }
+    return response;
 }

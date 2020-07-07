@@ -1,11 +1,11 @@
-jest.mock('../paths');
-
-jest.mock('fs');
-jest.mock('path');
-
 import { cleanMocked } from "../tests";
 
+jest.mock('path');
+
+jest.mock('fs');
 import fs from 'fs';
+
+jest.mock('../paths');
 import * as paths from '../paths';
 
 import * as sut from './persistence';
@@ -39,4 +39,16 @@ test('getPersistedRefreshToken_fileExists_returnsFileContents', async () => {
 	//assert
 	expect(fakeReadFileSync.mock.calls.length).toBe(1);
 	expect(token).toBe("some-refresh-token");
+});
+
+test('persistRefreshToken_tokenProvided_writesTokenContentsToFile', async () => {
+    //arrange
+    const fakeWriteFileSync = cleanMocked(fs.writeFileSync);
+
+	//act
+	await sut.persistRefreshToken("some-refresh-token");
+
+	//assert
+	expect(fakeWriteFileSync.mock.calls.length).toBe(1);
+	expect(fakeWriteFileSync.mock.calls[0][1]).toBe("some-refresh-token");
 });

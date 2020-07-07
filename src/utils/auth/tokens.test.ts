@@ -1,7 +1,13 @@
 import { globalState } from "./globals";
-jest.mock('../http');
 
+jest.mock('../http');
 import * as http from '../http';
+
+jest.mock('../console');
+import * as console from '../console';
+
+jest.mock('./persistence');
+import * as persistence from './persistence';
 
 import { cleanMocked } from "../tests";
 
@@ -73,4 +79,61 @@ test('refreshAccessToken_refreshTokenPresent_returnsAccessTokenFromAuth0Response
     expect(formArgument.get("refresh_token")).toBe("some-refresh-token");
 
 	expect(token).toBe("some-access-token");
+});
+
+test('acquireNewTokens_emailNotPresent_persistsAcquiredAccessToken', async () => {
+    //arrange
+    const fakePostJson = cleanMocked(http.postJson);
+    fakePostJson.mockResolvedValue({
+        access_token: "some-access-token",
+        refresh_token: "some-refresh-token"
+    });
+
+    const fakePersistRefreshToken = cleanMocked(persistence.persistRefreshToken);
+
+    const fakeAsk = cleanMocked(console.ask);
+    fakeAsk.mockResolvedValueOnce("some-email");
+    fakeAsk.mockResolvedValueOnce("some-one-time-code");
+
+	//act
+	var response = await sut.acquireNewTokens();
+
+	//assert
+    expect(fakePostJson.mock.calls.length).toBe(2);
+    
+    const bodyArgument = fakePostJson.mock.calls[1][1] as any;
+    expect(bodyArgument.username).toBe("some-email");
+
+    expect(fakePersistRefreshToken.mock.calls[0][0]).toBe("some-refresh-token");
+
+    expect(response.access_token).toBe("some-access-token");
+    expect(response.refresh_token).toBe("some-refresh-token");
+});
+
+test('acquireNewTokens_emailPresent_persistsAcquiredAccessToken', async () => {
+    //arrange
+    const fakePostJson = cleanMocked(http.postJson);
+    fakePostJson.mockResolvedValue({
+        access_token: "some-access-token",
+        refresh_token: "some-refresh-token"
+    });
+
+    const fakePersistRefreshToken = cleanMocked(persistence.persistRefreshToken);
+
+    const fakeAsk = cleanMocked(console.ask);
+    fakeAsk.mockResolvedValueOnce("some-one-time-code");
+
+	//act
+	var response = await sut.acquireNewTokens("some-email");
+
+	//assert
+    expect(fakePostJson.mock.calls.length).toBe(2);
+    
+    const bodyArgument = fakePostJson.mock.calls[1][1] as any;
+    expect(bodyArgument.username).toBe("some-email");
+
+    expect(fakePersistRefreshToken.mock.calls[0][0]).toBe("some-refresh-token");
+
+    expect(response.access_token).toBe("some-access-token");
+    expect(response.refresh_token).toBe("some-refresh-token");
 });
