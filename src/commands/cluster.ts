@@ -1,10 +1,10 @@
-import { withCredentials } from '../utils/auth';
 import { CommandModule } from 'yargs';
 import { consoleLog, consoleReference, showSpinnerUntil, printTable, askBoolean, printJobProgress, consoleError, consoleWarn } from '../utils/console';
 import yargs = require('yargs');
 import { handler } from '../utils/general';
 import { apiClient } from '../api/Client';
 import { handleValidationErrors } from '../utils/http';
+import { withCredentials } from '../utils/auth/middleware';
 
 type DestroyOptions = 
     { ["cluster-id"]: string; };

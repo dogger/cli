@@ -1,7 +1,7 @@
-import { getToken } from "../utils/auth";
 import { GeneralApi, ConfigurationParameters, FetchAPI, Configuration } from "./openapi";
 import fetch, { RequestInfo, RequestInit } from "node-fetch";
 import { isDevMode } from "../utils/general";
+import { refreshAccessToken } from "../utils/auth/tokens";
 
 (global as any).FormData = class {};
 (global as any).fetch = fetch;
@@ -16,7 +16,7 @@ class DoggerConfigurationParameters implements ConfigurationParameters {
 
     get fetchApi(): any {
         return async (input: RequestInfo, init: RequestInit) => {
-            var token = await getToken();
+            var token = await refreshAccessToken();
             if(token) {
                 init.headers = {
                     ...(init.headers || {}),

@@ -1,9 +1,9 @@
-import { withCredentials } from '../utils/auth';
 import { CommandModule } from 'yargs';
 import { consoleLog, consoleReference } from '../utils/console';
 import yargs = require('yargs');
 import { handler } from '../utils/general';
 import { printPlansTable, filterOptions, getMatchingPlans, ProvisionOptions, provision, FilterOptions } from './plan.shared';
+import { withCredentials } from '../utils/auth/middleware';
 
 export = {
     command: "plan",

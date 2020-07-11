@@ -1,10 +1,10 @@
-import { withCredentials } from '../utils/auth';
 import { CommandModule } from 'yargs';
 import { consoleLog, consoleReference } from '../utils/console';
 import yargs = require('yargs');
 import { handler } from '../utils/general';
 import { printLogs } from './logs.shared';
 import { apiClient } from '../api/Client';
+import { withCredentials } from '../utils/auth/middleware';
 
 interface LogsOptions {
     follow: boolean;

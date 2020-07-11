@@ -1,7 +1,7 @@
-import { withCredentials } from '../utils/auth';
 import { CommandModule } from 'yargs';
 import { consoleLog } from '../utils/console';
 import { handler } from '../utils/general';
+import { withCredentials } from '../utils/auth/middleware';
 
 type LoginOptions = 
     { email: string; };
