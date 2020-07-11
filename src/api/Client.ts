@@ -11,7 +11,7 @@ class DoggerConfigurationParameters implements ConfigurationParameters {
         if(isDevMode())
             return "http://localhost:14566";
 
-        return "https://dogger.io";
+        return "https://app.dogger.io";
     }
 
     get fetchApi(): any {
