@@ -5,6 +5,7 @@ import * as persistence from './persistence';
 
 import { cleanMocked } from '../tests';
 
+beforeEach(() => globalState.reset());
 afterEach(() => globalState.reset());
 
 test('setIsStateless_isTrue_clearsPersistedToken', async () => {
