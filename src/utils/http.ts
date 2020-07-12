@@ -20,7 +20,7 @@ async function post(url: string, contentType: string, body: BodyInit) {
         body: body
     });
     if (!response.ok)
-        throw new Error('Could not make request to ' + url);
+        throw new Error('Could not make request to ' + url + ': ' + await response.text());
 
     return response.json();
 }

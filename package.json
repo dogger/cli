@@ -1,6 +1,6 @@
 {
   "name": "@dogger/cli",
-  "version": "1.0.68",
+  "version": "1.0.69",
   "description": "",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
