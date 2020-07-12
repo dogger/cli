@@ -22,9 +22,16 @@ export type Service = {
     image: string|undefined;
 }
 
+export type GlobalVolume = {
+    driver: string|undefined;
+}
+
 export type ComposeContents = {
     services: {
         [name: string]: Service
+    },
+    volumes: {
+        [name: string]: GlobalVolume
     }
 }
 
@@ -35,7 +42,7 @@ export type ComposeFile = {
 }
 
 export function getServicesWithBuildReferences(composeFiles: ComposeFile[]) {
-    const services = getServicesFromComposeFiles(composeFiles);
+    const services = getServicesFromComposeFiles(...composeFiles);
     return services.filter(x => !!x.service.build);
 }
 
@@ -58,7 +65,7 @@ export function parseComposeFile(filePath: string): ComposeFile {
     }
 }
 
-export function getServicesFromComposeFiles(composeFiles: ComposeFile[]) {
+export function getServicesFromComposeFiles(...composeFiles: ComposeFile[]) {
     return composeFiles
         .map(x => x.parsed)
         .map(x => x.services)
@@ -74,11 +81,26 @@ export function getServicesFromComposeFiles(composeFiles: ComposeFile[]) {
         .flat();
 }
 
+export function getGlobalVolumesFromComposeFiles(...composeFiles: ComposeFile[]) {
+    return composeFiles
+        .map(x => x.parsed)
+        .map(x => x.volumes)
+        .filter(x => !!x)
+        .map(services => Object
+            .getOwnPropertyNames(services)
+            .map(serviceName => ({
+                name: serviceName
+            }))
+            .filter(x => !!x.name))
+        .filter(x => !!x)
+        .flat();
+}
+
 export function mapPropertyFromServices<T>(
     composeFiles: ComposeFile[],
     selector: (service: Service) => T|null|undefined): T[]
 {
-    const values = getServicesFromComposeFiles(composeFiles)
+    const values = getServicesFromComposeFiles(...composeFiles)
         .map(x => x.service)
         .map(selector)
         .filter(x => !!x)
@@ -97,6 +119,8 @@ export function getWorkingDirectoryForDockerComposeFiles(composeFiles: ComposeFi
 }
 
 export function getVolumeFilePaths(...composeFiles: ComposeFile[]): string[] {
+    const globalVolumes = getGlobalVolumesFromComposeFiles(...composeFiles);
+
     return mapPropertyFromServices(composeFiles, ({volumes}) => {
         if(typeof volumes === "undefined") {
             return void 0;
@@ -105,7 +129,9 @@ export function getVolumeFilePaths(...composeFiles: ComposeFile[]): string[] {
                 .map(volume => typeof volume === "string" ?
                     volume.split(':')[0] :
                     volume.source)
-                .filter(x => !!x)
+                .filter(volume => 
+                    !!volume &&
+                    !globalVolumes.find(v => v.name === volume))
                 .map(x => x!)
                 .map(x => {
                     const absolutePath = getAbsolutePathRelativeToComposeFiles(composeFiles, x);

@@ -4,5 +4,6 @@ module.exports = {
   "collectCoverageFrom": [
     "src/**/*.{js,jsx,ts,tsx}",
     "!src/api/**/*.{js,ts}"
-  ]
+  ],
+  modulePathIgnorePatterns: ["dist"]
 };
