@@ -135,6 +135,9 @@ export function getVolumeFilePaths(...composeFiles: ComposeFile[]): string[] {
                 .map(x => x!)
                 .map(x => {
                     const absolutePath = getAbsolutePathRelativeToComposeFiles(composeFiles, x);
+                    if(!fs.existsSync(absolutePath))
+                        return [];
+                    
                     const stat = fs.lstatSync(absolutePath);
                     if(!stat.isDirectory() && stat.isFile()) {
                         return [x];
