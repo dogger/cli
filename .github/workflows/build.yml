@@ -23,7 +23,8 @@ jobs:
       - name: Set up Node.js for NPM
         uses: actions/setup-node@v1
         with:
-            registry-url: "https://registry.npmjs.org"
+          node-version: '12'
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         working-directory: .
