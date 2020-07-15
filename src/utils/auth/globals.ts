@@ -3,15 +3,18 @@ import { persistRefreshToken } from "./persistence";
 class GlobalState {
     private _accessToken: string|null;
     private _isStateless: boolean;
+    private _arguments: any;
 
     constructor() {
         this._accessToken = null;
         this._isStateless = false;
+        this._arguments = null;
     }
 
     reset() {
         this._accessToken = null;
         this._isStateless = false;
+        this._arguments = null;
     }
 
     setIsStateless(value: boolean) {
@@ -19,6 +22,10 @@ class GlobalState {
             persistRefreshToken('');
 
         this._isStateless = value;
+    }
+
+    setCurrentArguments(args: any) {
+        this._arguments = args;
     }
 
     get isStateless() {
@@ -31,6 +38,14 @@ class GlobalState {
 
     get accessToken() {
         return this._accessToken;
+    }
+
+    get arguments() {
+        return this._arguments;
+    }
+
+    get isVerbose() {
+        return 'verbose' in (this._arguments || {});
     }
 } 
 

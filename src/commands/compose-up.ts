@@ -1,27 +1,39 @@
 import { CommandModule } from 'yargs';
 import { apiClient } from '../api/Client';
 import { existsSync, readFileSync, PathLike } from 'fs';
-import { consoleError, showSpinnerUntil, consoleLog, consoleWarn, consoleReference, printJobProgress, printTable } from '../utils/console';
+import { consoleError, showSpinnerUntil, consoleLog, consoleWarn, consoleReference, printJobProgress, printTable, consoleVerbose } from '../utils/console';
 import { handler, trimStart, isDevMode } from '../utils/general';
 import { Options } from './compose-up.shared';
 import execa = require('execa');
 import path = require('path');
-import { parseComposeFile, getEnvironmentFilePaths, ComposeFile, getVolumeFilePaths, getAbsolutePathRelativeToComposeFiles as getAbsoluteDirectoryRelativeToComposeFile, getServicesWithBuildReferences, getWorkingDirectoryForDockerComposeFiles, getServicesFromComposeFiles, yamlifyComposeFiles } from '../utils/docker-compose-yml';
+import { 
+    parseComposeFile, 
+    getEnvironmentFilePaths, 
+    ComposeFile, 
+    getVolumeFilePaths, 
+    getContextFilePaths,
+    getAbsolutePathRelativeToComposeFiles, 
+    getServicesWithBuildReferences, 
+    getWorkingDirectoryForDockerComposeFiles, 
+    getRelativePathRelativeToComposeFiles
+} from '../utils/docker-compose-yml';
 import { provision } from './plan.shared';
 import { DeployToClusterRequest } from '../api/openapi';
 import { handleValidationErrors } from '../utils/http';
 import { printLogs } from './logs.shared';
 import { withCredentials } from '../utils/auth/middleware';
+import { onlyUnique, onlyUniqueForField } from '../utils/filters';
+import { globalState } from '../utils/auth/globals';
 
 function tryMapFile(composeFiles: ComposeFile[], filePath: PathLike) {
-    const relativeFilePathToComposeFile = getAbsoluteDirectoryRelativeToComposeFile(composeFiles, filePath);
+    const relativeFilePathToComposeFile = getAbsolutePathRelativeToComposeFiles(composeFiles, filePath);
     if(!existsSync(relativeFilePathToComposeFile)) {
         consoleWarn(`Could not find the file "${relativeFilePathToComposeFile}" specified in the Docker Compose YML, so it will not be sent to the server. You may experience an error because of this.`)
         return null;
     }
 
     return {
-        contents: readFileSync(relativeFilePathToComposeFile).toString(),
+        contents: readFileSync(relativeFilePathToComposeFile).toString("base64"),
         path: filePath.toString()
     };
 }
@@ -36,6 +48,14 @@ function tryGetVolumeFiles(...composeFiles: ComposeFile[]) {
 
 function tryGetEnvironmentFiles(...composeFiles: ComposeFile[]) {
     return getEnvironmentFilePaths(...composeFiles)
+        .filter(x => !!x)
+        .map(x => tryMapFile(composeFiles, x))
+        .filter(x => !!x)
+        .map(x => x!);
+}
+
+function tryGetContextFiles(...composeFiles: ComposeFile[]) {
+    return getContextFilePaths(...composeFiles)
         .filter(x => !!x)
         .map(x => tryMapFile(composeFiles, x))
         .filter(x => !!x)
@@ -117,8 +137,14 @@ export = {
 
         const files = [
             ...tryGetEnvironmentFiles(...dockerComposeYmlFiles),
-            ...tryGetVolumeFiles(...dockerComposeYmlFiles)
-        ];
+            ...tryGetVolumeFiles(...dockerComposeYmlFiles),
+            ...tryGetContextFiles(...dockerComposeYmlFiles)
+        ].filter(onlyUniqueForField(f => f.path));
+
+        if(globalState.isVerbose) {
+            consoleVerbose("Docker Compose YML files:\n" + dockerComposeYmlFiles.map(x => x.path).join('\n'));
+            consoleVerbose("Context files that will be sent to the server:\n" + files.map(x => x.path).join('\n'));
+        }
 
         if(argv.demo) {
             const wasProvisioned = await provision({
@@ -248,7 +274,10 @@ export = {
                     'Sending deployment request to Dogger',
                     async () => {
                         const body: DeployToClusterRequest = {
-                            dockerComposeYmlContents: yamlifyComposeFiles(dockerComposeYmlFiles),
+                            dockerComposeYmlFilePaths: dockerComposeYmlFiles
+                                .map(x => getRelativePathRelativeToComposeFiles(
+                                    dockerComposeYmlFiles,
+                                    x.path)),
                             files
                         };
 

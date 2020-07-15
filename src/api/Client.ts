@@ -2,6 +2,8 @@ import { GeneralApi, ConfigurationParameters, FetchAPI, Configuration } from "./
 import fetch, { RequestInfo, RequestInit } from "node-fetch";
 import { isDevMode } from "../utils/general";
 import { refreshAccessToken } from "../utils/auth/tokens";
+import { globalState } from "../utils/auth/globals";
+import { consoleVerbose } from "../utils/console";
 
 (global as any).FormData = class {};
 (global as any).fetch = fetch;
@@ -24,18 +26,35 @@ class DoggerConfigurationParameters implements ConfigurationParameters {
                 };
             }
 
+            const isVerbose = globalState.isVerbose;
+            if(isVerbose) {
+                consoleVerbose("Sending request to " + input + "\n" + JSON.stringify(init));
+            }
+
+            let response = null;
             if(init.method === "GET") {
                 let retryCount = 0;
-                while(retryCount++ < 3) {
+                while(true) {
                     try {
-                        return await fetch(input, init);
+                        response = await fetch(input, init);
+                        break;
                     } catch(ex) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        if(retryCount++ < 3) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        } else {
+                            throw ex;
+                        }
                     }
                 }
             } else {
-                return await fetch(input, init);
+                response = await fetch(input, init);
             }
+
+            if(isVerbose) {
+                consoleVerbose("Response from " + input + " " + response.status + "\n" + JSON.stringify(await response.clone().text()));
+            }
+
+            return response;
         };
     }
 }

@@ -34,6 +34,7 @@ export async function showSpinnerUntil<T>(description: string, operation: (stopS
         color: "cyan",
         stream: process.stdout
     }).start();
+
     const stopper = () => spinner.stop();
     try {
         let result = await operation(stopper);
@@ -45,6 +46,11 @@ export async function showSpinnerUntil<T>(description: string, operation: (stopS
 
 export function consoleReference(command: string): string {
     return colors.gray(command);
+}
+
+export function consoleVerbose(text: string) {
+    console.log();
+    console.log(colors.gray(text));
 }
 
 export function consoleError(text: string) {

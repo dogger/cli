@@ -1,9 +1,10 @@
 import { compare } from 'semver';
 
 import packageJson = require('../metadata.json');
-import { consoleWarn, consoleReference, consoleError } from './console';
+import { consoleWarn, consoleReference, consoleError, consoleVerbose } from './console';
 import colors = require('colors/safe');
 import fetch, { Response } from 'node-fetch';
+import { globalState } from './auth/globals';
 
 export function checkCommands(yargs: any, argv: any, numRequired: any) {
     if (argv._.length < numRequired) {
@@ -25,6 +26,12 @@ export function trimStart(text: string|undefined|null, trim: string) {
 
 export function handler<T>(callback: (args: T) => Promise<any>) {
     return async (args: T) => {
+        globalState.setCurrentArguments(args);
+
+        if(globalState.isVerbose) {
+            consoleVerbose("Arguments: " + JSON.stringify(args));
+        }
+
         if(process.env.DOGGER_NO_UPDATE !== "true") {
             try {
                 var packageInformationResponse = await fetch('https://api.npms.io/v2/package/@dogger%2Fcli');

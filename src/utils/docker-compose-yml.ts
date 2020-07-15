@@ -1,6 +1,9 @@
 import yaml from 'yaml';
 import fs = require('fs');
 import path = require('path');
+import { globalState } from './auth/globals';
+import { consoleVerbose } from './console';
+import { getFilesRecursively } from './files';
 
 export type EnvFile = string|string[]|undefined;
 
@@ -108,10 +111,15 @@ export function mapPropertyFromServices<T>(
     return values as T[];
 }
 
-export function getAbsolutePathRelativeToComposeFiles(composeFiles: ComposeFile[], filePath: fs.PathLike) {
+export function getAbsolutePathRelativeToComposeFiles(composeFiles: ComposeFile[], relativeFilePath: fs.PathLike) {
     return path.join(
         getWorkingDirectoryForDockerComposeFiles(composeFiles), 
-        filePath.toString());
+        relativeFilePath.toString());
+}
+
+export function getRelativePathRelativeToComposeFiles(composeFiles: ComposeFile[], absoluteFilePath: fs.PathLike) {
+    const workingDirectory = getWorkingDirectoryForDockerComposeFiles(composeFiles);
+    return path.join(absoluteFilePath.toString().substr(workingDirectory.length + 1));
 }
 
 export function getWorkingDirectoryForDockerComposeFiles(composeFiles: ComposeFile[]): string {
@@ -133,21 +141,17 @@ export function getVolumeFilePaths(...composeFiles: ComposeFile[]): string[] {
                     !!volume &&
                     !globalVolumes.find(v => v.name === volume))
                 .map(x => x!)
-                .map(x => {
-                    const absolutePath = getAbsolutePathRelativeToComposeFiles(composeFiles, x);
+                .map(volumePath => {
+                    const absolutePath = getAbsolutePathRelativeToComposeFiles(composeFiles, volumePath);
                     if(!fs.existsSync(absolutePath))
                         return [];
                     
                     const stat = fs.lstatSync(absolutePath);
                     if(!stat.isDirectory() && stat.isFile()) {
-                        return [x];
+                        return [volumePath];
                     } else if(stat.isDirectory() && !stat.isFile()) {
-                        return fs
-                            .readdirSync(absolutePath, { 
-                                withFileTypes: true 
-                            })
-                            .filter(item => !item.isDirectory())
-                            .map(item => `${x}/${item.name}`);
+                        return [...getFilesRecursively(absolutePath)]
+                            .map(relativePath => `${volumePath}/${relativePath}`);
                     }
 
                     return [];
@@ -173,4 +177,13 @@ export function getEnvironmentFilePaths(...composeFiles: ComposeFile[]): string[
             return null;
         }
     }) as any as string[];
+}
+
+export function getContextFilePaths(...composeFiles: ComposeFile[]): string[] {
+    const pathToSearch = getWorkingDirectoryForDockerComposeFiles(composeFiles);
+    return [...getFilesRecursively(pathToSearch)]
+        .map(path => getRelativePathRelativeToComposeFiles(
+            composeFiles,
+            path
+        ));
 }

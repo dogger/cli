@@ -32,16 +32,16 @@ import {
 export interface ConfigurationFileOverride {
     /**
      * 
-     * @type {{ [key: string]: string; }}
-     * @memberof ConfigurationFileOverride
-     */
-    buildArguments?: { [key: string]: string; } | null;
-    /**
-     * 
      * @type {Array<string>}
      * @memberof ConfigurationFileOverride
      */
     dockerComposeYmlFilePaths?: Array<string> | null;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof ConfigurationFileOverride
+     */
+    buildArguments?: { [key: string]: string; } | null;
     /**
      * 
      * @type {TimeSpan}
@@ -66,8 +66,8 @@ export function ConfigurationFileOverrideFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'buildArguments': !exists(json, 'buildArguments') ? undefined : json['buildArguments'],
         'dockerComposeYmlFilePaths': !exists(json, 'dockerComposeYmlFilePaths') ? undefined : json['dockerComposeYmlFilePaths'],
+        'buildArguments': !exists(json, 'buildArguments') ? undefined : json['buildArguments'],
         'expiry': !exists(json, 'expiry') ? undefined : TimeSpanFromJSON(json['expiry']),
         'conversationMode': !exists(json, 'conversationMode') ? undefined : ConversationModeFromJSON(json['conversationMode']),
     };
@@ -82,8 +82,8 @@ export function ConfigurationFileOverrideToJSON(value?: ConfigurationFileOverrid
     }
     return {
         
-        'buildArguments': value.buildArguments,
         'dockerComposeYmlFilePaths': value.dockerComposeYmlFilePaths,
+        'buildArguments': value.buildArguments,
         'expiry': TimeSpanToJSON(value.expiry),
         'conversationMode': ConversationModeToJSON(value.conversationMode),
     };
